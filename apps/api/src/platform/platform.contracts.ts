@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const platformWorkspaceIdInput = z.object({
-	organizationId: z.string().cuid(),
+	organizationId: z.string().uuid(),
 });
 
 export const platformCreateBusinessInput = z.object({
@@ -16,7 +16,7 @@ export const platformCreateBusinessInput = z.object({
 });
 
 export const platformContactCreateInput = z.object({
-	organizationId: z.string().cuid(),
+	organizationId: z.string().uuid(),
 	firstName: z.string().trim().min(1).max(96),
 	lastName: z.string().trim().max(96).optional(),
 	email: z.email().optional(),
@@ -27,7 +27,7 @@ export const platformContactCreateInput = z.object({
 });
 
 export const platformCallCreateInput = z.object({
-	organizationId: z.string().cuid(),
+	organizationId: z.string().uuid(),
 	contactId: z.string().cuid(),
 	direction: z.enum(["inbound", "outbound"]),
 	outcome: z.string().trim().max(120).optional(),
@@ -37,7 +37,7 @@ export const platformCallCreateInput = z.object({
 });
 
 export const platformOpportunityCreateInput = z.object({
-	organizationId: z.string().cuid(),
+	organizationId: z.string().uuid(),
 	contactId: z.string().cuid(),
 	eventId: z.string().cuid().optional(),
 	stageId: z.string().cuid(),
@@ -47,7 +47,7 @@ export const platformOpportunityCreateInput = z.object({
 });
 
 export const platformPipelineStageCreateInput = z.object({
-	organizationId: z.string().cuid(),
+	organizationId: z.string().uuid(),
 	key: z
 		.string()
 		.trim()
@@ -61,14 +61,14 @@ export const platformPipelineStageCreateInput = z.object({
 });
 
 export const platformMoveOpportunityInput = z.object({
-	organizationId: z.string().cuid(),
+	organizationId: z.string().uuid(),
 	opportunityId: z.string().cuid(),
 	stageId: z.string().cuid(),
 	lostReason: z.string().trim().max(500).optional(),
 });
 
 export const platformFollowUpCreateInput = z.object({
-	organizationId: z.string().cuid(),
+	organizationId: z.string().uuid(),
 	opportunityId: z.string().cuid(),
 	dueAt: z.iso.datetime(),
 	message: z.string().trim().max(1_000).optional(),
@@ -78,13 +78,13 @@ export const platformFollowUpCreateInput = z.object({
 
 /** Private n8n endpoint: atomically claim due, approved follow-ups before delivery. */
 export const platformFollowUpClaimInput = z.object({
-	organizationId: z.string().cuid(),
+	organizationId: z.string().uuid(),
 	limit: z.number().int().min(1).max(100).default(25),
 });
 
 /** Private n8n endpoint: persist the result after YCloud has attempted delivery. */
 export const platformFollowUpResultInput = z.object({
-	organizationId: z.string().cuid(),
+	organizationId: z.string().uuid(),
 	followUpId: z.string().cuid(),
 	status: z.enum(["SENT", "FAILED"]),
 	providerMessageId: z.string().trim().min(1).max(191).optional(),
@@ -92,7 +92,7 @@ export const platformFollowUpResultInput = z.object({
 });
 
 export const platformWhatsappEventInput = z.object({
-	organizationId: z.string().cuid(),
+	organizationId: z.string().uuid(),
 	externalEventId: z.string().trim().min(1).max(191),
 	conversationId: z.string().trim().min(1).max(191),
 	providerMessageId: z.string().trim().min(1).max(191),
@@ -107,7 +107,7 @@ export const platformWhatsappEventInput = z.object({
 
 /** Private ticketing webhook. A repeated organizationId/externalId is idempotent. */
 export const platformTicketOrderInput = z.object({
-	organizationId: z.string().cuid(),
+	organizationId: z.string().uuid(),
 	externalId: z.string().trim().min(1).max(191),
 	phone: z.string().trim().min(5).max(32),
 	contactName: z.string().trim().max(191).optional(),
@@ -121,7 +121,7 @@ export const platformTicketOrderInput = z.object({
 });
 
 export const platformListInput = z.object({
-	organizationId: z.string().cuid(),
+	organizationId: z.string().uuid(),
 	limit: z.number().int().min(1).max(100).default(50),
 });
 

@@ -14,7 +14,9 @@ const LANDING_PATH = "/";
 
 const SIGN_IN_PATH = "/sign-in";
 
-const UNGATED = ["/grant-access", "/eve"];
+// The global SORTEK console owns its own workspace selection. It must not be
+// redirected into the upstream install's single-workspace onboarding gate.
+const UNGATED = ["/grant-access", "/eve", "/platform"];
 
 const ANONYMOUS = ["/t"];
 

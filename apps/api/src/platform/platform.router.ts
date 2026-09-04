@@ -10,7 +10,6 @@ import {
 import type { z } from "zod";
 import type { AuthedTrpcContext } from "../trpc/context.types";
 import { AuthMiddleware } from "../trpc/middlewares/auth.middleware";
-import { restMeta } from "../trpc/openapi";
 import {
 	platformCallCreateInput,
 	platformContactCreateInput,
@@ -31,20 +30,17 @@ export class PlatformRouter {
 		@Inject(PlatformService) private readonly platform: PlatformService,
 	) {}
 
-	@Query({ meta: restMeta("GET", "/platform/workspaces", ["Platform"]) })
+	@Query()
 	workspaces(@Ctx() ctx: AuthedTrpcContext) {
 		return this.platform.listWorkspaces(ctx.user.id);
 	}
 
-	@Query({ meta: restMeta("GET", "/platform/summary", ["Platform"]) })
+	@Query()
 	globalSummary(@Ctx() ctx: AuthedTrpcContext) {
 		return this.platform.globalSummary(ctx.user.id);
 	}
 
-	@Mutation({
-		input: platformCreateBusinessInput,
-		meta: restMeta("POST", "/platform/workspaces", ["Platform"]),
-	})
+	@Mutation({ input: platformCreateBusinessInput })
 	createBusiness(
 		@Ctx() ctx: AuthedTrpcContext,
 		@Input() input: z.infer<typeof platformCreateBusinessInput>,
@@ -52,10 +48,7 @@ export class PlatformRouter {
 		return this.platform.createBusiness(ctx.user.id, input);
 	}
 
-	@Query({
-		input: platformListInput,
-		meta: restMeta("POST", "/platform/contacts/search", ["CRM"]),
-	})
+	@Query({ input: platformListInput })
 	contacts(
 		@Ctx() ctx: AuthedTrpcContext,
 		@Input() input: z.infer<typeof platformListInput>,
@@ -67,10 +60,7 @@ export class PlatformRouter {
 		);
 	}
 
-	@Mutation({
-		input: platformContactCreateInput,
-		meta: restMeta("POST", "/platform/contacts", ["CRM"]),
-	})
+	@Mutation({ input: platformContactCreateInput })
 	createContact(
 		@Ctx() ctx: AuthedTrpcContext,
 		@Input() input: z.infer<typeof platformContactCreateInput>,
@@ -78,10 +68,7 @@ export class PlatformRouter {
 		return this.platform.createContact(ctx.user.id, input);
 	}
 
-	@Query({
-		input: platformListInput,
-		meta: restMeta("POST", "/platform/inbox/search", ["CRM"]),
-	})
+	@Query({ input: platformListInput })
 	inbox(
 		@Ctx() ctx: AuthedTrpcContext,
 		@Input() input: z.infer<typeof platformListInput>,
@@ -93,10 +80,7 @@ export class PlatformRouter {
 		);
 	}
 
-	@Query({
-		input: platformWorkspaceIdInput,
-		meta: restMeta("GET", "/platform/pipeline/{organizationId}", ["CRM"]),
-	})
+	@Query({ input: platformWorkspaceIdInput })
 	pipelineStages(
 		@Ctx() ctx: AuthedTrpcContext,
 		@Input("organizationId") organizationId: string,
@@ -104,10 +88,7 @@ export class PlatformRouter {
 		return this.platform.listPipelineStages(ctx.user.id, organizationId);
 	}
 
-	@Mutation({
-		input: platformPipelineStageCreateInput,
-		meta: restMeta("POST", "/platform/pipeline", ["CRM"]),
-	})
+	@Mutation({ input: platformPipelineStageCreateInput })
 	createPipelineStage(
 		@Ctx() ctx: AuthedTrpcContext,
 		@Input() input: z.infer<typeof platformPipelineStageCreateInput>,
@@ -115,10 +96,7 @@ export class PlatformRouter {
 		return this.platform.createPipelineStage(ctx.user.id, input);
 	}
 
-	@Mutation({
-		input: platformCallCreateInput,
-		meta: restMeta("POST", "/platform/calls", ["CRM"]),
-	})
+	@Mutation({ input: platformCallCreateInput })
 	createCall(
 		@Ctx() ctx: AuthedTrpcContext,
 		@Input() input: z.infer<typeof platformCallCreateInput>,
@@ -126,10 +104,7 @@ export class PlatformRouter {
 		return this.platform.createCall(ctx.user.id, input);
 	}
 
-	@Mutation({
-		input: platformOpportunityCreateInput,
-		meta: restMeta("POST", "/platform/opportunities", ["CRM"]),
-	})
+	@Mutation({ input: platformOpportunityCreateInput })
 	createOpportunity(
 		@Ctx() ctx: AuthedTrpcContext,
 		@Input() input: z.infer<typeof platformOpportunityCreateInput>,
@@ -137,10 +112,7 @@ export class PlatformRouter {
 		return this.platform.createOpportunity(ctx.user.id, input);
 	}
 
-	@Query({
-		input: platformListInput,
-		meta: restMeta("POST", "/platform/opportunities/search", ["CRM"]),
-	})
+	@Query({ input: platformListInput })
 	opportunities(
 		@Ctx() ctx: AuthedTrpcContext,
 		@Input() input: z.infer<typeof platformListInput>,
@@ -152,12 +124,7 @@ export class PlatformRouter {
 		);
 	}
 
-	@Mutation({
-		input: platformMoveOpportunityInput,
-		meta: restMeta("PATCH", "/platform/opportunities/{opportunityId}/stage", [
-			"CRM",
-		]),
-	})
+	@Mutation({ input: platformMoveOpportunityInput })
 	moveOpportunity(
 		@Ctx() ctx: AuthedTrpcContext,
 		@Input() input: z.infer<typeof platformMoveOpportunityInput>,
@@ -165,10 +132,7 @@ export class PlatformRouter {
 		return this.platform.moveOpportunity(ctx.user.id, input);
 	}
 
-	@Mutation({
-		input: platformFollowUpCreateInput,
-		meta: restMeta("POST", "/platform/follow-ups", ["CRM"]),
-	})
+	@Mutation({ input: platformFollowUpCreateInput })
 	createFollowUp(
 		@Ctx() ctx: AuthedTrpcContext,
 		@Input() input: z.infer<typeof platformFollowUpCreateInput>,
@@ -176,10 +140,7 @@ export class PlatformRouter {
 		return this.platform.createFollowUp(ctx.user.id, input);
 	}
 
-	@Query({
-		input: platformWorkspaceIdInput,
-		meta: restMeta("GET", "/platform/summary/{organizationId}", ["CRM"]),
-	})
+	@Query({ input: platformWorkspaceIdInput })
 	summary(
 		@Ctx() ctx: AuthedTrpcContext,
 		@Input("organizationId") organizationId: string,
