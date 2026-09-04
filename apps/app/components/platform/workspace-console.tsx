@@ -17,6 +17,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { type FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { PageShell } from "@/components/page-shell";
 import { useTRPC } from "@/lib/trpc/client";
 
 function slugify(value: string) {
@@ -64,7 +65,7 @@ export function WorkspaceConsole() {
 	}
 
 	return (
-		<main className="mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-8 px-5 py-8 md:px-8 md:py-12">
+		<PageShell className="gap-6">
 			<header className="max-w-2xl space-y-3">
 				<p className="text-xs font-medium uppercase tracking-[0.14em] text-primary">
 					◉ Plataforma SORTEK
@@ -79,7 +80,7 @@ export function WorkspaceConsole() {
 				</p>
 			</header>
 			{summary.data && (
-				<section className="grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-4">
+				<section className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-4">
 					{[
 						["Negocios", summary.data.workspaces],
 						["Leads", summary.data.contacts],
@@ -103,7 +104,7 @@ export function WorkspaceConsole() {
 			<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
 				<section
 					aria-label="Workspaces"
-					className="grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2"
+					className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2"
 				>
 					{workspaces.isLoading &&
 						["first", "second", "third", "fourth"].map((key) => (
@@ -122,7 +123,7 @@ export function WorkspaceConsole() {
 								<span className="grid size-9 place-items-center rounded-full bg-primary/12 text-primary">
 									<Building className="size-4" />
 								</span>
-								<span className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
+								<span className="rounded border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
 									{role}
 								</span>
 							</div>
@@ -141,7 +142,7 @@ export function WorkspaceConsole() {
 					)}
 				</section>
 
-				<Card className="h-fit rounded-2xl border-border bg-card shadow-none">
+				<Card className="h-fit border-border bg-card shadow-none">
 					<CardHeader>
 						<CardTitle className="flex items-center gap-2 text-base">
 							<Add className="size-4 text-primary" /> Crear negocio
@@ -187,7 +188,7 @@ export function WorkspaceConsole() {
 								/>
 							</div>
 							<Button
-								className="w-full rounded-full"
+								className="w-full"
 								type="submit"
 								disabled={create.isPending || !generatedSlug}
 							>
@@ -197,6 +198,6 @@ export function WorkspaceConsole() {
 					</CardContent>
 				</Card>
 			</div>
-		</main>
+		</PageShell>
 	);
 }
