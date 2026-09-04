@@ -62,6 +62,12 @@ export function AppHeader({ user }: { user: User }) {
 			</div>
 
 			<div className="ml-auto flex shrink-0 items-center gap-1.5">
+				<Link
+					href="/platform"
+					className="hidden rounded-full px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:block"
+				>
+					Negocios
+				</Link>
 				<EnrichmentQueue />
 				<UserMenu
 					user={user}

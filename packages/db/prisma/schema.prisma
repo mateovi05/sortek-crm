@@ -33,6 +33,14 @@ model User {
   fieldValues    FieldValue[]        @relation("FieldValueUser")
   savedViews     SavedView[]         @relation("SavedViewOwner")
 
+  // SORTEK platform records. Kept separate from the upstream single-install
+  // records while the application moves to workspace-scoped CRM data.
+  platformRole   PlatformRole         @default(WORKSPACE_USER)
+  crmContacts    CrmContact[]         @relation("CrmContactOwner")
+  crmCalls       CrmCall[]            @relation("CrmCallAuthor")
+  crmActivities  CrmActivity[]        @relation("CrmActivityAuthor")
+  crmFollowUps   CrmFollowUp[]        @relation("CrmFollowUpOwner")
+
   createdAgentDefinitions AgentDefinition[]             @relation("AgentDefinitionCreator")
   createdAgentVersions    AgentVersion[]                @relation("AgentVersionCreator")
   createdAgentTriggers    AgentTrigger[]                @relation("AgentTriggerCreator")
@@ -52,6 +60,11 @@ model User {
 
   @@unique([email])
   @@map("user")
+}
+
+enum PlatformRole {
+  PLATFORM_ADMIN
+  WORKSPACE_USER
 }
 
 model SlackMemberMatch {
@@ -1486,9 +1499,333 @@ model Organization {
   website     String?
   members     Member[]
   invitations Invitation[]
+  crmContacts CrmContact[]
+  crmConversations CrmConversation[]
+  crmCalls CrmCall[]
+  crmPipelineStages CrmPipelineStage[]
+  crmOpportunities CrmOpportunity[]
+  crmFollowUps CrmFollowUp[]
+  crmEvents CrmEvent[]
+  crmTicketOrders CrmTicketOrder[]
+  crmActivities CrmActivity[]
+  crmIntegrationEvents CrmIntegrationEvent[]
+  crmFeatures WorkspaceFeatureFlag[]
 
   @@unique([slug])
   @@map("organization")
+}
+
+/// Platform-scoped CRM models. `organizationId` is required on every
+/// operational record: it is the tenancy boundary enforced by the API.
+enum CrmSource {
+  MANUAL
+  WHATSAPP
+  PHONE_AGENT
+  TICKETING
+  IMPORT
+}
+
+enum CrmConversationStatus {
+  OPEN
+  HANDOFF
+  CLOSED
+}
+
+enum CrmMessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum CrmFollowUpStatus {
+  SCHEDULED
+  CLAIMED
+  SENT
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum CrmOrderStatus {
+  PENDING
+  PAID
+  REFUNDED
+  CANCELLED
+}
+
+enum WorkspaceFeature {
+  WHATSAPP
+  EVENTS
+  TICKETING
+}
+
+model WorkspaceFeatureFlag {
+  id             String           @id @default(cuid())
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  feature        WorkspaceFeature
+  enabled        Boolean          @default(false)
+  configuredAt   DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([organizationId, feature])
+  @@index([organizationId, enabled])
+  @@map("workspaceFeatureFlag")
+}
+
+model CrmContact {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  firstName      String
+  lastName       String?
+  email          String?
+  phone          String?
+  phoneNormalized String?
+  source         CrmSource    @default(MANUAL)
+  ownerId        String?
+  owner          User?        @relation("CrmContactOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  firstContactAt DateTime     @default(now())
+  lastActivityAt DateTime     @default(now())
+  reactivatedAt  DateTime?
+  reactivationCount Int       @default(0)
+  archivedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  conversations  CrmConversation[]
+  calls          CrmCall[]
+  opportunities  CrmOpportunity[]
+  activities     CrmActivity[]
+  ticketOrders   CrmTicketOrder[]
+
+  @@unique([organizationId, phoneNormalized])
+  @@index([organizationId, lastActivityAt])
+  @@index([organizationId, email])
+  @@map("crmContact")
+}
+
+model CrmConversation {
+  id             String                @id @default(cuid())
+  organizationId String
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contactId      String
+  contact        CrmContact            @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  channel        String
+  externalId     String
+  status         CrmConversationStatus @default(OPEN)
+  handoffReason  String?
+  lastMessageAt  DateTime              @default(now())
+  closedAt       DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  messages       CrmMessage[]
+  activities     CrmActivity[]
+
+  @@unique([organizationId, channel, externalId])
+  @@index([organizationId, status, lastMessageAt])
+  @@index([contactId, lastMessageAt])
+  @@map("crmConversation")
+}
+
+model CrmMessage {
+  id             String              @id @default(cuid())
+  conversationId String
+  conversation   CrmConversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  direction      CrmMessageDirection
+  providerMessageId String?
+  kind           String              @default("text")
+  body           String?
+  payload        Json?
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  createdAt      DateTime            @default(now())
+
+  @@unique([conversationId, providerMessageId])
+  @@index([conversationId, createdAt])
+  @@map("crmMessage")
+}
+
+model CrmCall {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contactId      String
+  contact        CrmContact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  authorId       String?
+  author         User?        @relation("CrmCallAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  source         CrmSource    @default(MANUAL)
+  externalId     String?
+  direction      String
+  outcome        String?
+  notes          String?
+  transcript     String?
+  startedAt      DateTime
+  endedAt        DateTime?
+  durationSeconds Int?
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, externalId])
+  @@index([organizationId, startedAt])
+  @@index([contactId, startedAt])
+  @@map("crmCall")
+}
+
+model CrmPipelineStage {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  key            String
+  label          String
+  position       Int
+  isClosed       Boolean      @default(false)
+  isWon          Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  opportunities  CrmOpportunity[]
+
+  @@unique([organizationId, key])
+  @@unique([organizationId, position])
+  @@map("crmPipelineStage")
+}
+
+model CrmEvent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  startsAt       DateTime?
+  venue          String?
+  city           String?
+  currency       String       @default("EUR")
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  opportunities  CrmOpportunity[]
+  ticketOrders   CrmTicketOrder[]
+
+  @@index([organizationId, active, startsAt])
+  @@map("crmEvent")
+}
+
+model CrmOpportunity {
+  id             String            @id @default(cuid())
+  organizationId String
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contactId      String
+  contact        CrmContact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  eventId        String?
+  event          CrmEvent?         @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  stageId        String
+  stage          CrmPipelineStage  @relation(fields: [stageId], references: [id], onDelete: Restrict)
+  quantity       Int?
+  amountCents    Int?
+  currency       String            @default("EUR")
+  nextStep       String?
+  closedAt       DateTime?
+  lostReason     String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  followUps      CrmFollowUp[]
+  ticketOrders   CrmTicketOrder[]
+  activities     CrmActivity[]
+
+  @@unique([organizationId, contactId, eventId])
+  @@index([organizationId, stageId, updatedAt])
+  @@map("crmOpportunity")
+}
+
+model CrmFollowUp {
+  id             String            @id @default(cuid())
+  organizationId String
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  opportunityId  String
+  opportunity    CrmOpportunity    @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  ownerId        String?
+  owner          User?             @relation("CrmFollowUpOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  dueAt          DateTime
+  message        String?
+  approvedToContact Boolean         @default(false)
+  approvedToSend Boolean            @default(false)
+  status         CrmFollowUpStatus @default(SCHEDULED)
+  claimedAt      DateTime?
+  sentAt         DateTime?
+  completedAt    DateTime?
+  failureReason  String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([organizationId, status, dueAt])
+  @@map("crmFollowUp")
+}
+
+model CrmTicketOrder {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  externalId     String
+  contactId      String?
+  contact        CrmContact?    @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  opportunityId  String?
+  opportunity    CrmOpportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  eventId        String?
+  event          CrmEvent?      @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  quantity       Int            @default(1)
+  amountCents    Int            @default(0)
+  currency       String         @default("EUR")
+  status         CrmOrderStatus @default(PENDING)
+  paidAt         DateTime?
+  payload        Json?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([organizationId, externalId])
+  @@index([organizationId, status, paidAt])
+  @@map("crmTicketOrder")
+}
+
+model CrmActivity {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contactId      String?
+  contact        CrmContact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  conversationId String?
+  conversation   CrmConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  opportunityId  String?
+  opportunity    CrmOpportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  authorId       String?
+  author         User?        @relation("CrmActivityAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  kind           String
+  source         CrmSource    @default(MANUAL)
+  data           Json?
+  occurredAt     DateTime     @default(now())
+
+  @@index([organizationId, occurredAt])
+  @@index([contactId, occurredAt])
+  @@map("crmActivity")
+}
+
+model CrmIntegrationEvent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider       String
+  externalId     String
+  receivedAt     DateTime     @default(now())
+  processedAt    DateTime?
+  failedAt       DateTime?
+  error          String?
+  payload        Json
+
+  @@unique([organizationId, provider, externalId])
+  @@index([organizationId, processedAt])
+  @@map("crmIntegrationEvent")
 }
 
 model WorkspaceProfile {

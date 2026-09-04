@@ -40,6 +40,16 @@
 
 ---
 
+## SORTEK multi-tenant CRM fork
+
+This public MIT fork is the foundation for **SORTEK CRM** at `crm.sortek.io`.
+It adds isolated workspaces, SORTEK platform administration and private n8n/
+ticketing ingress without changing the original project's licence. Goza Europa
+is the first workspace; every new business starts empty. Read the operational
+handoff in [docs/SORTEK_PLATFORM.md](./docs/SORTEK_PLATFORM.md) before deploying.
+
+---
+
 ## What this is
 
 Most CRMs are a database with a form in front of it. The AI ones bolt a chat box onto
