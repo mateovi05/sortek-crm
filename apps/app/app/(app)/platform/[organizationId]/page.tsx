@@ -1,4 +1,4 @@
-import { CrmWorkspaceConsole } from "@/components/platform/crm-workspace-console";
+import { CrmPipelineBoard } from "@/components/platform/crm-pipeline-board";
 import { requireSession } from "@/lib/session";
 
 export default async function CrmWorkspacePage({
@@ -6,5 +6,5 @@ export default async function CrmWorkspacePage({
 }: PageProps<"/platform/[organizationId]">) {
 	await requireSession();
 	const { organizationId } = await params;
-	return <CrmWorkspaceConsole organizationId={organizationId} />;
+	return <CrmPipelineBoard organizationId={organizationId} />;
 }
