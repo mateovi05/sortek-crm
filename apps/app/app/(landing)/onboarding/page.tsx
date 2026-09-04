@@ -1,7 +1,9 @@
 import { DEFAULT_WORKSPACE_NAME } from "@crm/auth";
+import { db, PlatformRole } from "@crm/db";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { AuthHeading, AuthShell } from "@/components/auth-shell";
-import { requireMailboxAccess } from "@/lib/session";
+import { requireMailboxAccess, requireSession } from "@/lib/session";
 import { OnboardingForm } from "./onboarding-form";
 
 export const metadata: Metadata = {
@@ -11,6 +13,17 @@ export const metadata: Metadata = {
 export const instant = false;
 
 export default async function OnboardingPage() {
+	const session = await requireSession();
+	const user = await db.user.findUnique({
+		where: { id: session.user.id },
+		select: { platformRole: true },
+	});
+
+	// The upstream onboarding configures its legacy single workspace. Platform
+	// admins work through the multi-workspace console instead, so they should
+	// never be asked to complete that unrelated setup flow.
+	if (user?.platformRole === PlatformRole.PLATFORM_ADMIN) redirect("/platform");
+
 	await requireMailboxAccess();
 
 	return (
