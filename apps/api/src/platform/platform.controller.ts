@@ -20,7 +20,7 @@ import { PlatformService } from "./platform.service";
  * Private ingress for n8n. The shared value is an API environment secret and
  * must be configured in n8n as a Header Auth credential, never in workflow JSON.
  */
-@Controller("integrations")
+@Controller(["integrations", "api/integrations"])
 @AllowAnonymous()
 export class PlatformController {
 	constructor(private readonly platform: PlatformService) {}
