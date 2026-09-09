@@ -78,7 +78,7 @@ export async function POST(request: Request) {
 		organizationId: workspace?.id ?? null,
 	});
 	response.cookies.set({
-		name: COOKIE_NAME,
+		name: isProduction ? `__Secure-${COOKIE_NAME}` : COOKIE_NAME,
 		// Next serializes cookie values itself. Pre-encoding here would make
 		// Better Auth receive a doubly encoded value and reject the signature.
 		value: `${token}.${signature}`,
