@@ -6,6 +6,7 @@
 	"scripts": {
 		"prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
 		"build": "turbo run build",
+		"start": "bun run --filter=@crm/db db:deploy && sh -c 'PORT=3001 bun run --filter=api start:prod & bun run --filter=app start'",
 		"dev": "turbo run dev",
 		"lint": "turbo run lint",
 		"lint:slop": "oxlint",
