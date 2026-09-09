@@ -76,6 +76,8 @@ async function SignIn({
 	if (options?.microsoft ?? false) configured.push("microsoft");
 
 	const providers = options?.providers ?? [];
+	const onlinePreview = Boolean(process.env.CRM_PREVIEW_ACCESS_KEY);
+	const previewEnabled = process.env.NODE_ENV !== "production" || onlinePreview;
 
 	const insisted = configured.find((provider) => provider === method);
 	const showSso = providers.length > 0 && insisted === undefined;
@@ -89,13 +91,17 @@ async function SignIn({
 	if (!showSso && social.length === 0) {
 		return (
 			<>
-				{process.env.NODE_ENV !== "production" ? (
+				{previewEnabled ? (
 					<>
 						<AuthHeading
-							title="Vista previa local"
-							description="Accede con un usuario de desarrollo. No crea ni usa cuentas reales."
+							title={onlinePreview ? "CRM Fisio Urrutia" : "Vista previa local"}
+							description={
+								onlinePreview
+									? "Accede al workspace privado de Fisio Urrutia."
+									: "Accede con un usuario de desarrollo. No crea ni usa cuentas reales."
+							}
 						/>
-						<PreviewSignIn />
+						<PreviewSignIn requiresAccessKey={onlinePreview} />
 					</>
 				) : (
 					<>

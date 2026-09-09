@@ -1,0 +1,11 @@
+[build]
+builder = "RAILPACK"
+buildCommand = "bunx turbo run build --filter=api --filter=app"
+
+[deploy]
+preDeployCommand = "bun run --filter=@crm/db db:deploy"
+startCommand = "sh -c 'PORT=3001 bun run --filter=api start:prod & bun run --filter=app start'"
+healthcheckPath = "/sign-in"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
