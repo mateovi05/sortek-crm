@@ -534,6 +534,7 @@ export class PlatformService {
 					},
 				},
 			});
+			let contactWasCreated = false;
 			if (!contact) {
 				const [firstName, ...rest] = (
 					input.contactName?.trim() || input.phone
@@ -546,6 +547,38 @@ export class PlatformService {
 						phone: input.phone,
 						phoneNormalized,
 						source: CrmSource.WHATSAPP,
+					},
+				});
+				contactWasCreated = true;
+			}
+			let opportunityId: string | undefined;
+			if (contactWasCreated) {
+				const initialStage = await tx.crmPipelineStage.findFirst({
+					where: { organizationId: input.organizationId, isClosed: false },
+					orderBy: { position: "asc" },
+				});
+				if (!initialStage)
+					throw new NotFoundException(
+						"An open pipeline stage is required before importing contacts.",
+					);
+				const opportunity = await tx.crmOpportunity.create({
+					data: {
+						organizationId: input.organizationId,
+						contactId: contact.id,
+						stageId: initialStage.id,
+						currency: "EUR",
+					},
+				});
+				opportunityId = opportunity.id;
+				await tx.crmActivity.create({
+					data: {
+						organizationId: input.organizationId,
+						contactId: contact.id,
+						opportunityId: opportunity.id,
+						kind: "opportunity_created",
+						source: CrmSource.WHATSAPP,
+						data: json({ stageId: initialStage.id }),
+						occurredAt: new Date(input.occurredAt),
 					},
 				});
 			}
@@ -632,6 +665,7 @@ export class PlatformService {
 				duplicate: false,
 				contactId: contact.id,
 				conversationId: conversation.id,
+				opportunityId,
 			};
 		});
 	}
